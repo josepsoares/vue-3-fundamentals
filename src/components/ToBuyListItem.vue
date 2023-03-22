@@ -1,24 +1,34 @@
 <script lang="ts" setup>
+import { ModalsContainer, useModal } from 'vue-final-modal';
+
 import { useShopListStore } from '../store/store';
+import ToBuyListItemEditModal from './ToBuyListItemEditModal.vue';
 
 import TrashIcon from '../assets/icons/trash.svg?component';
 import EditIcon from '../assets/icons/edit.svg?component';
 
-const store = useShopListStore();
+import { IListItem } from '../ts';
 
 const { item, index } = defineProps<{
-  item: {
-    name: string;
-    highPriority: boolean;
-  };
+  item: IListItem;
   index: number;
 }>();
 
-const addIndex = (a: number, b: number) => {
-  return a + b;
-};
+const store = useShopListStore();
 
-console.log(index, store.isEditingItem);
+const { open, close } = useModal({
+  component: ToBuyListItemEditModal,
+  attrs: {
+    item: item,
+    onSubmit(id, values) {
+      store.updateItem(id, values);
+      close();
+    },
+    onCancel() {
+      close();
+    }
+  }
+});
 </script>
 
 <template>
@@ -27,43 +37,27 @@ console.log(index, store.isEditingItem);
       'text-orange-500': item.highPriority
     }"
   >
-    <td>{{ addIndex(index, 1) }}º</td>
+    <td>{{ item.id }}º</td>
     <td>{{ item.name }}</td>
     <td>{{ item.highPriority ? 'high' : '---' }}</td>
 
     <th>
       <button
-        class="btn btn-ghost btn-xs"
-        v-if="store.isEditingItem !== index"
-        @click="store.$patch({ isEditingItem: index })"
-        :disabled="
-          store.isEditingItem !== index && store.isEditingItem !== null
-        "
+        class="btn-ghost no-animation btn-xs btn text-accent"
+        @click="open()"
       >
-        <EditIcon class="mr-2 w-5 h-5" />
-        edit
-      </button>
-      <button
-        v-if="store.isEditingItem !== null && index === store.isEditingItem"
-        class="btn btn-ghost text-primary btn-xs"
-      >
-        <EditIcon class="mr-2 w-5 h-5" />
-        save
-      </button>
-      <button
-        v-if="store.isEditingItem !== null && index === store.isEditingItem"
-        class="btn btn-ghost text-error btn-xs"
-        @click="store.$patch({ isEditingItem: null })"
-      >
-        <EditIcon class="mr-2 w-5 h-5" />
-        cancel
+        <EditIcon class="mr-2 h-5 w-5" /> Edit
       </button>
     </th>
 
     <th>
-      <button class="btn btn-ghost btn-xs" @click="store.deleteItem(index)">
-        <TrashIcon class="mr-2 w-5 h-5" /> delete
+      <button
+        class="btn-ghost no-animation btn-xs btn text-error"
+        @click="store.deleteItem(index)"
+      >
+        <TrashIcon class="mr-2 h-5 w-5" /> Delete
       </button>
     </th>
   </tr>
+  <ModalsContainer />
 </template>
